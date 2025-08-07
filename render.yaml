@@ -3,11 +3,7 @@ services:
     name: websoroban-backend
     env: node
     rootDir: backend
-    buildCommand: |
-      # Install dependencies
-      npm ci --only=production
-      # Build the Rust compiler Docker image with longer timeout
-      timeout 1800 docker build -t websoroban-compiler:latest .
+    buildCommand: npm ci --only=production
     startCommand: npm start
     envVars:
       - key: NODE_ENV
