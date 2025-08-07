@@ -120,9 +120,9 @@ export default function WebSorobanLanding() {
               <a href="#pricing" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
                 Pricing
               </a>
-              <a href="#docs" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
+              {/* <a href="/docs" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
                 Docs
-              </a>
+              </a> */}
               <Button variant="ghost" className="text-slate-600 hover:text-slate-900">
                 Login
               </Button>
@@ -153,7 +153,7 @@ export default function WebSorobanLanding() {
                 <a href="#pricing" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
                   Pricing
                 </a>
-                <a href="#docs" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
+                <a href="/docs" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
                   Docs
                 </a>
                 <Button variant="ghost" className="justify-start text-slate-600 hover:text-slate-900">
@@ -551,7 +551,7 @@ export default function WebSorobanLanding() {
                 </div>
                 <div className="flex items-center space-x-1 text-slate-500">
                   <Heart className="w-4 h-4" />
-                  <span className="text-sm font-body">Built for Stellar Soroban</span>
+                  <span className="text-sm font-body">Built for Stellar Community</span>
                 </div>
               </div>
 

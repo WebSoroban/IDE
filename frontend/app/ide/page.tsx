@@ -37,8 +37,182 @@ export default function IDEPage() {
         } else {
           // Create a default project if none exist
           const newProject = await projectApi.createProject("My Soroban Contract");
-          setProject(newProject);
-          setActiveFile(newProject.files[0]);
+          
+          // Add a default test file to the project
+          const testFile: ProjectFile = {
+            name: "tests.rs",
+            content: `#![no_std]
+use soroban_sdk::{contract, contractimpl, Env, Symbol, Address, vec};
+
+#[contract]
+pub struct TestContract;
+
+#[contractimpl]
+impl TestContract {
+    pub fn init(env: Env) {
+        // Initialize test contract
+        env.storage().instance().set(&Symbol::new(&env, "owner"), &env.current_contract_address());
+    }
+    
+    pub fn test_hello(env: Env, name: Symbol) -> Symbol {
+        // Test function
+        name
+    }
+    
+    pub fn test_transfer(env: Env, from: Address, to: Address, amount: i128) -> bool {
+        // Test transfer function
+        from.require_auth();
+        
+        let balance_key = Symbol::new(&env, "balance");
+        let from_balance = env.storage().instance().get(&balance_key).unwrap_or(0);
+        
+        if from_balance >= amount {
+            env.storage().instance().set(&balance_key, &(from_balance - amount));
+            true
+        } else {
+            false
+        }
+    }
+    
+    pub fn test_get_balance(env: Env, address: Address) -> i128 {
+        // Test balance function
+        let balance_key = Symbol::new(&env, "balance");
+        env.storage().instance().get(&balance_key).unwrap_or(0)
+    }
+    
+    pub fn test_mint(env: Env, to: Address, amount: i128) -> bool {
+        // Test mint function
+        let balance_key = Symbol::new(&env, "balance");
+        let current_balance = env.storage().instance().get(&balance_key).unwrap_or(0);
+        env.storage().instance().set(&balance_key, &(current_balance + amount));
+        true
+    }
+    
+    pub fn test_burn(env: Env, from: Address, amount: i128) -> bool {
+        // Test burn function
+        from.require_auth();
+        
+        let balance_key = Symbol::new(&env, "balance");
+        let current_balance = env.storage().instance().get(&balance_key).unwrap_or(0);
+        
+        if current_balance >= amount {
+            env.storage().instance().set(&balance_key, &(current_balance - amount));
+            true
+        } else {
+            false
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use soroban_sdk::{Address, Symbol};
+    
+    #[test]
+    fn test_init() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, TestContract);
+        env.as_contract(&contract_id, || {
+            TestContract::init(env.clone());
+        });
+    }
+    
+    #[test]
+    fn test_hello() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, TestContract);
+        env.as_contract(&contract_id, || {
+            let name = Symbol::new(&env, "World");
+            let result = TestContract::test_hello(env.clone(), name);
+            assert_eq!(result, name);
+        });
+    }
+    
+    #[test]
+    fn test_transfer() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, TestContract);
+        let from = Address::random(&env);
+        let to = Address::random(&env);
+        
+        env.as_contract(&contract_id, || {
+            // Set initial balance
+            let balance_key = Symbol::new(&env, "balance");
+            env.storage().instance().set(&balance_key, &100);
+            
+            // Test transfer
+            let result = TestContract::test_transfer(env.clone(), from, to, 50);
+            assert!(result);
+            
+            // Verify balance
+            let new_balance = TestContract::test_get_balance(env.clone(), from);
+            assert_eq!(new_balance, 50);
+        });
+    }
+    
+    #[test]
+    fn test_mint() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, TestContract);
+        let to = Address::random(&env);
+        
+        env.as_contract(&contract_id, || {
+            let result = TestContract::test_mint(env.clone(), to, 100);
+            assert!(result);
+            
+            let balance = TestContract::test_get_balance(env.clone(), to);
+            assert_eq!(balance, 100);
+        });
+    }
+    
+    #[test]
+    fn test_burn() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, TestContract);
+        let from = Address::random(&env);
+        
+        env.as_contract(&contract_id, || {
+            // Set initial balance
+            let balance_key = Symbol::new(&env, "balance");
+            env.storage().instance().set(&balance_key, &100);
+            
+            let result = TestContract::test_burn(env.clone(), from, 30);
+            assert!(result);
+            
+            let balance = TestContract::test_get_balance(env.clone(), from);
+            assert_eq!(balance, 70);
+        });
+    }
+    
+    #[test]
+    fn test_insufficient_balance() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, TestContract);
+        let from = Address::random(&env);
+        let to = Address::random(&env);
+        
+        env.as_contract(&contract_id, || {
+            // Set low balance
+            let balance_key = Symbol::new(&env, "balance");
+            env.storage().instance().set(&balance_key, &10);
+            
+            // Try to transfer more than available
+            let result = TestContract::test_transfer(env.clone(), from, to, 50);
+            assert!(!result);
+        });
+    }
+}`,
+            type: 'rust'
+          };
+          
+          // Update the project with the test file
+          const updatedProject = await projectApi.updateProject(newProject._id, {
+            files: [...newProject.files, testFile]
+          });
+          
+          setProject(updatedProject);
+          setActiveFile(updatedProject.files[0]);
         }
       } catch (error) {
         console.error("Failed to load initial project:", error);
@@ -299,15 +473,118 @@ export default function IDEPage() {
     }
   };
 
-  const handleNewFile = async (fileName?: string) => {
+  const handleNewFile = (fileName?: string) => {
     if (!project) return;
-    try {
-      const timestamp = Date.now();
-      const defaultName = fileName || `contract_${timestamp}.rs`;
-      const newFile: ProjectFile = {
-        name: defaultName,
-        type: 'rust',
-        content: `#![no_std]
+    
+    const timestamp = Date.now();
+    const defaultName = fileName || `contract_${timestamp}.rs`;
+    
+    // Check if it's a test file
+    const isTestFile = defaultName.includes('test') || defaultName.includes('spec');
+    const fileExtension = defaultName.endsWith('.rs') ? '' : '.rs';
+    const finalName = defaultName + fileExtension;
+    
+    // Check for duplicate names
+    const existingFile = project.files.find(f => f.name === finalName);
+    if (existingFile) {
+      alert('A file with this name already exists!');
+      return;
+    }
+
+    let defaultContent = '';
+    
+    if (isTestFile) {
+      // Test file template
+      defaultContent = `#![no_std]
+use soroban_sdk::{contract, contractimpl, Env, Symbol, Address, vec};
+
+#[contract]
+pub struct TestContract;
+
+#[contractimpl]
+impl TestContract {
+    pub fn init(env: Env) {
+        // Initialize test contract
+        env.storage().instance().set(&Symbol::new(&env, "owner"), &env.current_contract_address());
+    }
+    
+    pub fn test_hello(env: Env, name: Symbol) -> Symbol {
+        // Test function
+        name
+    }
+    
+    pub fn test_transfer(env: Env, from: Address, to: Address, amount: i128) -> bool {
+        // Test transfer function
+        from.require_auth();
+        
+        let balance_key = Symbol::new(&env, "balance");
+        let from_balance = env.storage().instance().get(&balance_key).unwrap_or(0);
+        
+        if from_balance >= amount {
+            env.storage().instance().set(&balance_key, &(from_balance - amount));
+            true
+        } else {
+            false
+        }
+    }
+    
+    pub fn test_get_balance(env: Env, address: Address) -> i128 {
+        // Test balance function
+        let balance_key = Symbol::new(&env, "balance");
+        env.storage().instance().get(&balance_key).unwrap_or(0)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use soroban_sdk::{Address, Symbol};
+    
+    #[test]
+    fn test_init() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, TestContract);
+        env.as_contract(&contract_id, || {
+            TestContract::init(env.clone());
+        });
+    }
+    
+    #[test]
+    fn test_hello() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, TestContract);
+        env.as_contract(&contract_id, || {
+            let name = Symbol::new(&env, "World");
+            let result = TestContract::test_hello(env.clone(), name);
+            assert_eq!(result, name);
+        });
+    }
+    
+    #[test]
+    fn test_transfer() {
+        let env = Env::default();
+        let contract_id = env.register_contract(None, TestContract);
+        let from = Address::random(&env);
+        let to = Address::random(&env);
+        
+        env.as_contract(&contract_id, || {
+            // Set initial balance
+            let balance_key = Symbol::new(&env, "balance");
+            env.storage().instance().set(&balance_key, &100);
+            
+            // Test transfer
+            let result = TestContract::test_transfer(env.clone(), from, to, 50);
+            assert!(result);
+            
+            // Verify balance
+            let new_balance = TestContract::test_get_balance(env.clone(), from);
+            assert_eq!(new_balance, 50);
+        });
+    }
+}`;
+    } else {
+      // Regular contract template
+      defaultContent = `#![no_std]
 use soroban_sdk::{contract, contractimpl, Env, Symbol, Address};
 
 #[contract]
@@ -317,23 +594,63 @@ pub struct MyContract;
 impl MyContract {
     pub fn init(env: Env) {
         // Contract initialization
+        env.storage().instance().set(&Symbol::new(&env, "owner"), &env.current_contract_address());
     }
     
     pub fn hello(env: Env, name: Symbol) -> Symbol {
         // Your contract logic here
         name
     }
-}`
-      };
-      const updatedFiles = [...project.files, newFile];
-      const updatedProject = await projectApi.updateProject(project._id, { files: updatedFiles });
-      setProject(updatedProject);
-      setActiveFile(newFile);
-      toast.success(`New file "${newFile.name}" created!`);
-    } catch (error) {
-      console.error("Failed to create new file:", error);
-      toast.error("Failed to create new file");
+    
+    pub fn transfer(env: Env, from: Address, to: Address, amount: i128) {
+        from.require_auth();
+        
+        let balance_key = Symbol::new(&env, "balance");
+        let from_balance = env.storage().instance().get(&balance_key).unwrap_or(0);
+        
+        require!(from_balance >= amount, Error::InsufficientBalance);
+        
+        // Update balances
+        env.storage().instance().set(&balance_key, &(from_balance - amount));
+        let to_balance = env.storage().instance().get(&balance_key).unwrap_or(0);
+        env.storage().instance().set(&balance_key, &(to_balance + amount));
     }
+    
+    pub fn get_balance(env: Env, address: Address) -> i128 {
+        let balance_key = Symbol::new(&env, "balance");
+        env.storage().instance().get(&balance_key).unwrap_or(0)
+    }
+}
+
+#[derive(Clone)]
+pub enum Error {
+    InsufficientBalance,
+}
+
+impl From<Error> for soroban_sdk::Error {
+    fn from(error: Error) -> Self {
+        match error {
+            Error::InsufficientBalance => soroban_sdk::Error::from_type_and_code(1, 1),
+        }
+    }
+}`;
+    }
+
+    const newFile: ProjectFile = {
+      name: finalName,
+      content: defaultContent,
+      type: 'rust'
+    };
+
+    setProject(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        files: [...prev.files, newFile]
+      };
+    });
+
+    setActiveFile(newFile);
   };
 
   const handleSaveProject = async () => {

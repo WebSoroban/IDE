@@ -96,32 +96,7 @@ export function Navbar({ walletAddress, onConnectWallet, projectSelector }: Navb
         </Button>
 
         {/* Help & Documentation */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
-            >
-              <HelpCircle className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56 bg-slate-800 border-slate-700">
-            <DropdownMenuItem className="text-slate-200 hover:bg-slate-700">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Documentation
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-slate-200 hover:bg-slate-700">
-              <Github className="w-4 h-4 mr-2" />
-              GitHub Repository
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-slate-600" />
-            <DropdownMenuItem className="text-slate-200 hover:bg-slate-700">
-              <Globe className="w-4 h-4 mr-2" />
-              Stellar Developer Portal
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+
 
         {/* Settings */}
         <DropdownMenu>
