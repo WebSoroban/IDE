@@ -11,7 +11,9 @@ RUN apk add --no-cache \
     rust \
     cargo \
     dbus-dev \
-    pkgconf
+    pkgconf \
+    udev-dev \
+    libusb-dev
 
 # Install wasm32v1 target
 RUN rustup target add wasm32v1-none
