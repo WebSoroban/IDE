@@ -1,11 +1,12 @@
 FROM rust:1.85-slim
 
-# Install system dependencies
+# Install system dependencies including libdbus-1-dev and pkg-config
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     pkg-config \
     libssl-dev \
+    libdbus-1-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install wasm32v1 target for Rust 1.85+

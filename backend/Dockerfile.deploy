@@ -9,14 +9,15 @@ RUN apk add --no-cache \
     pkg-config \
     libssl-dev \
     rust \
-    cargo
+    cargo \
+    dbus-dev \
+    pkgconf
 
 # Install wasm32v1 target
 RUN rustup target add wasm32v1-none
 
 # Install Soroban CLI
-RUN curl -sSfL https://soroban.stellar.org/install.sh | sh
-ENV PATH="/root/.local/bin:$PATH"
+RUN cargo install --locked --git https://github.com/stellar/soroban-cli soroban-cli --bin soroban
 
 # Create app directory
 WORKDIR /app
