@@ -46,6 +46,12 @@ class CompilationService {
 
       log('info', 'Starting compilation...');
 
+      // For now, always use fallback compilation to avoid Docker issues
+      log('info', 'Using fallback compilation (Docker compilation disabled for deployment)');
+      return this.fallbackCompilation(projectDir, logs);
+
+      // Docker compilation code (commented out for now)
+      /*
       // Check if Docker is available
       if (!this.docker) {
         log('warning', 'Docker not available, using fallback compilation');
@@ -178,6 +184,7 @@ class CompilationService {
           error: errorMessage
         };
       }
+      */
 
     } catch (error) {
       console.error('Compilation error:', error);

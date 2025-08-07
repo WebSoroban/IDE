@@ -7,16 +7,7 @@ RUN apk add --no-cache \
     bash \
     build-essential \
     pkg-config \
-    libssl-dev \
-    rust \
-    cargo
-
-# Install wasm32v1 target
-RUN rustup target add wasm32v1-none
-
-# Install Soroban CLI
-RUN curl -sSfL https://soroban.stellar.org/install.sh | sh
-ENV PATH="/root/.local/bin:$PATH"
+    libssl-dev
 
 # Create app directory
 WORKDIR /app
@@ -32,9 +23,6 @@ COPY . .
 
 # Create necessary directories
 RUN mkdir -p /app/temp /app/logs
-
-# Build the compiler image
-RUN docker build -t websoroban-compiler:latest .
 
 # Expose port
 EXPOSE 3001
