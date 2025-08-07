@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: websoroban-backend
+    env: node
+    rootDir: backend
+    buildCommand: |
+      # Build the Rust compiler image
+      docker build -t websoroban-compiler:latest .
+      # Install Node.js dependencies
+      npm ci --only=production
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: MONGODB_URI
+        sync: false
+    healthCheckPath: /api/health
+    dockerfilePath: ./Dockerfile.simple
+    dockerContext: .
+    dockerCommand: |
+      # Build compiler image
+      docker build -t websoroban-compiler:latest .
+      # Start the backend
+      npm start 
