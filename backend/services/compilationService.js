@@ -3,10 +3,18 @@ const fs = require('fs-extra');
 const path = require('path');
 const os = require('os');
 const Docker = require('dockerode');
+
 class CompilationService {
   constructor() {
     this.tempDir = path.join(os.tmpdir(), 'soroban-compile');
-    this.docker = new Docker();
+    this.docker = null;
+    
+    // Try to initialize Docker, but don't fail if it's not available
+    try {
+      this.docker = new Docker();
+    } catch (error) {
+      console.log('Docker not available, will use fallback compilation');
+    }
   }
 
   async compileProject(projectId, files) {
@@ -34,8 +42,6 @@ class CompilationService {
         };
         logs.push(logEntry);
         console.log(`[${type.toUpperCase()}] ${message}`);
-        
-
       };
 
       log('info', 'Starting compilation...');
@@ -51,12 +57,8 @@ class CompilationService {
         await this.docker.getImage('websoroban-compiler:latest').inspect();
         log('info', 'Found compiler Docker image');
       } catch (error) {
-        log('error', 'Compiler Docker image not found. Please run: npm run setup');
-        return {
-          success: false,
-          logs,
-          error: 'Docker image not found'
-        };
+        log('warning', 'Compiler Docker image not found, using fallback compilation');
+        return this.fallbackCompilation(projectDir, logs);
       }
 
       // Create output directory
@@ -102,11 +104,7 @@ class CompilationService {
               try {
                 const logEntry = JSON.parse(cleanLine);
                 logs.push(logEntry);
-                
-
               } catch (e) {
-
-                
                 // Also add to logs array
                 const logEntry = {
                   type: 'info',
@@ -123,8 +121,6 @@ class CompilationService {
                 timestamp: new Date().toISOString()
               };
               logs.push(logEntry);
-              
-
             }
           }
         } catch (error) {
@@ -166,8 +162,6 @@ class CompilationService {
         const successMessage = 'Compilation successful!';
         log('success', successMessage);
         
-
-        
         return {
           success: true,
           logs,
@@ -177,8 +171,6 @@ class CompilationService {
       } else {
         const errorMessage = 'Compilation failed';
         log('error', errorMessage);
-        
-
         
         return {
           success: false,
@@ -197,8 +189,6 @@ class CompilationService {
         timestamp: new Date().toISOString()
       };
       logs.push(logEntry);
-      
-
       
       return {
         success: false,

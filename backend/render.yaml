@@ -11,4 +11,7 @@ services:
         value: 3001
       - key: MONGODB_URI
         sync: false
-    healthCheckPath: /api/health 
+    healthCheckPath: /api/health
+    autoDeploy: true
+    branch: main
+    plan: starter 
