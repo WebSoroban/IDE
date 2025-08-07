@@ -5,6 +5,7 @@ RUN apk add --no-cache \
     docker \
     curl \
     bash \
+    git \
     build-essential \
     pkg-config \
     libssl-dev
