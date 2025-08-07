@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: websoroban-backend
+    env: node
+    rootDir: backend
+    buildCommand: |
+      # Install dependencies
+      npm ci --only=production
+      # Build the Rust compiler Docker image with longer timeout
+      timeout 1800 docker build -t websoroban-compiler:latest .
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: MONGODB_URI
+        sync: false
+    healthCheckPath: /api/health
+    autoDeploy: true
+    branch: main
+    plan: starter 

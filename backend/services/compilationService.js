@@ -44,14 +44,8 @@ class CompilationService {
         console.log(`[${type.toUpperCase()}] ${message}`);
       };
 
-      log('info', 'Starting compilation...');
+      log('info', 'Starting real Rust compilation...');
 
-      // For now, always use fallback compilation to avoid Docker issues
-      log('info', 'Using fallback compilation (Docker compilation disabled for deployment)');
-      return this.fallbackCompilation(projectDir, logs);
-
-      // Docker compilation code (commented out for now)
-      /*
       // Check if Docker is available
       if (!this.docker) {
         log('warning', 'Docker not available, using fallback compilation');
@@ -63,8 +57,14 @@ class CompilationService {
         await this.docker.getImage('websoroban-compiler:latest').inspect();
         log('info', 'Found compiler Docker image');
       } catch (error) {
-        log('warning', 'Compiler Docker image not found, using fallback compilation');
-        return this.fallbackCompilation(projectDir, logs);
+        log('warning', 'Compiler Docker image not found, building it now...');
+        try {
+          await this.buildCompilerImage();
+          log('info', 'Compiler image built successfully');
+        } catch (buildError) {
+          log('error', 'Failed to build compiler image: ' + buildError.message);
+          return this.fallbackCompilation(projectDir, logs);
+        }
       }
 
       // Create output directory
@@ -88,7 +88,7 @@ class CompilationService {
 
       // Start container
       await container.start();
-      log('info', 'Docker container started');
+      log('info', 'Docker container started for real Rust compilation');
 
       // Get container logs in real-time using polling
       const pollLogs = async () => {
@@ -165,7 +165,7 @@ class CompilationService {
         const wasmBuffer = await fs.readFile(finalWasmPath);
         const wasmBase64 = wasmBuffer.toString('base64');
 
-        const successMessage = 'Compilation successful!';
+        const successMessage = 'Real Rust compilation successful!';
         log('success', successMessage);
         
         return {
@@ -175,7 +175,7 @@ class CompilationService {
           wasmUrl: `data:application/wasm;base64,${wasmBase64}`
         };
       } else {
-        const errorMessage = 'Compilation failed';
+        const errorMessage = 'Real Rust compilation failed';
         log('error', errorMessage);
         
         return {
@@ -184,7 +184,6 @@ class CompilationService {
           error: errorMessage
         };
       }
-      */
 
     } catch (error) {
       console.error('Compilation error:', error);
