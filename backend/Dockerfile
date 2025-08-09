@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     pkg-config \
     libssl-dev \
+    libdbus-1-dev \
+    libudev-dev \
     ca-certificates \
     gnupg \
     && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
@@ -15,23 +17,30 @@ RUN apt-get update && apt-get install -y \
 # Install wasm32v1 target for Rust 1.85+
 RUN rustup target add wasm32v1-none
 
-# Install Soroban CLI
-RUN curl -sSfL https://soroban.stellar.org/install.sh | sh
-ENV PATH="/root/.local/bin:$PATH"
+# Install Stellar CLI using cargo (official method)
+RUN cargo install --locked stellar-cli
+
+# Create symlink for backward compatibility (soroban -> stellar)
+RUN ln -s /usr/local/cargo/bin/stellar /usr/local/cargo/bin/soroban
+
+# Add cargo bin to PATH
+ENV PATH="/usr/local/cargo/bin:$PATH"
 
 # Create working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better caching
 COPY package*.json ./
 
-# Install Node.js dependencies
-RUN npm ci --only=production
+# Install Node dependencies
+RUN npm cache clean --force \
+    && npm install --production --no-optional \
+    && npm cache clean --force
 
 # Copy application files
 COPY . .
 
-# Copy compilation script
+# Copy and make compile script executable
 COPY scripts/compile.sh /usr/local/bin/compile.sh
 RUN chmod +x /usr/local/bin/compile.sh
 
@@ -41,5 +50,5 @@ RUN mkdir -p /app/temp /app/logs
 # Expose port
 EXPOSE 3001
 
-# Start the Node.js application
+# Start Node.js application
 CMD ["npm", "start"]
