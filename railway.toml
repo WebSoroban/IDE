@@ -1,0 +1,6 @@
+[build]
+dockerfile = "backend/Dockerfile"
+
+[deploy]
+workdir = "backend"
+startCommand = "npm start"
