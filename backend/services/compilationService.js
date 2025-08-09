@@ -333,25 +333,86 @@ class CompilationService {
       const { stdout: stellarVersion } = await execAsync('stellar --version');
       log('info', `Stellar CLI found: ${stellarVersion.trim()}`);
       
-      // Ensure proper project structure
-      log('info', 'Setting up Rust project structure...');
-      const srcDir = path.join(projectDir, 'src');
-      await fs.ensureDir(srcDir);
+      // Determine the correct build directory
+      let buildDir = projectDir;
+      const cargoTomlPath = path.join(projectDir, 'Cargo.toml');
       
-      // Check if main.rs exists and move it to lib.rs if needed
-      const mainPath = path.join(srcDir, 'main.rs');
-      const libPath = path.join(srcDir, 'lib.rs');
-      
-      if (await fs.pathExists(mainPath) && !(await fs.pathExists(libPath))) {
-        await fs.move(mainPath, libPath);
-        log('info', 'Moved main.rs to lib.rs for library project');
+      if (await fs.pathExists(cargoTomlPath)) {
+        const cargoContent = await fs.readFile(cargoTomlPath, 'utf8');
+        
+        // Check if this is a workspace
+        if (cargoContent.includes('[workspace]') && cargoContent.includes('members')) {
+          log('info', 'Detected Stellar workspace project...');
+          
+          // Look for contract directories
+          const contractsDir = path.join(projectDir, 'contracts');
+          if (await fs.pathExists(contractsDir)) {
+            const contracts = await fs.readdir(contractsDir);
+            const contractDirs = [];
+            
+            for (const contract of contracts) {
+              const contractPath = path.join(contractsDir, contract);
+              const contractCargoPath = path.join(contractPath, 'Cargo.toml');
+              
+              if (await fs.pathExists(contractCargoPath)) {
+                contractDirs.push(contractPath);
+              }
+            }
+            
+            if (contractDirs.length > 0) {
+              // Use the first contract directory found
+              buildDir = contractDirs[0];
+              log('info', `Found contract at: ${path.relative(projectDir, buildDir)}`);
+            } else {
+              log('warning', 'Workspace found but no contracts detected, building from workspace root');
+            }
+          }
+        } else {
+          // Single contract project
+          log('info', 'Detected single contract project...');
+          
+          // Ensure proper project structure for single contract
+          const srcDir = path.join(projectDir, 'src');
+          await fs.ensureDir(srcDir);
+          
+          // Check if main.rs exists and move it to lib.rs if needed
+          const mainPath = path.join(srcDir, 'main.rs');
+          const libPath = path.join(srcDir, 'lib.rs');
+          
+          if (await fs.pathExists(mainPath) && !(await fs.pathExists(libPath))) {
+            await fs.move(mainPath, libPath);
+            log('info', 'Moved main.rs to lib.rs for library project');
+          } else if (!(await fs.pathExists(libPath))) {
+            // Create lib.rs if it doesn't exist - find any .rs file in the project
+            const files = await fs.readdir(buildDir);
+            const rsFiles = files.filter(f => f.endsWith('.rs'));
+            if (rsFiles.length > 0) {
+              const sourceFile = path.join(buildDir, rsFiles[0]);
+              await fs.copy(sourceFile, libPath);
+              log('info', `Created lib.rs from ${rsFiles[0]}`);
+            }
+          }
+          
+          // Fix library path issue by ensuring [lib] section exists
+          let updatedContent;
+          if (cargoContent.includes('[lib]')) {
+            // Replace existing [lib] section
+            updatedContent = cargoContent.replace(/\[lib\][\s\S]*?(?=\n\[|\n$|$)/m, '[lib]\npath = "src/lib.rs"');
+          } else {
+            // Add [lib] section
+            updatedContent = cargoContent + '\n\n[lib]\npath = "src/lib.rs"\n';
+          }
+          await fs.writeFile(cargoTomlPath, updatedContent);
+          log('info', 'Fixed Cargo.toml library path configuration');
+        }
       }
       
-      // Change to project directory and run stellar contract build
-      log('info', 'Building contract with Stellar CLI...');
-      const { stdout, stderr } = await execAsync('stellar contract build', { cwd: projectDir });
+      // Change to build directory and run stellar contract build
+      log('info', `Building contract with Stellar CLI from: ${path.relative(projectDir, buildDir)}`);
+      const { stdout, stderr } = await execAsync('stellar contract build', { cwd: buildDir });
       
-      if (stderr && !stderr.includes('warning')) {
+      // Check for actual compilation errors (not just stderr output)
+      if (stderr && (stderr.includes('error:') || stderr.includes('failed')) && !stderr.includes('Build Complete')) {
         throw new Error(stderr);
       }
       
@@ -362,17 +423,39 @@ class CompilationService {
         });
       }
       
-      // Look for the compiled WASM file
-      const wasmFiles = await fs.readdir(path.join(projectDir, 'target', 'wasm32-unknown-unknown', 'release')).catch(() => []);
-      const wasmFile = wasmFiles.find(f => f.endsWith('.wasm'));
+      // Look for the compiled WASM file in the build directory
+      // Try both newer (wasm32v1-none) and older (wasm32-unknown-unknown) target directories
+      let wasmFiles = [];
+      let targetDir = '';
+      
+      // First try the newer wasm32v1-none target
+      const newTargetPath = path.join(buildDir, 'target', 'wasm32v1-none', 'release');
+      log('info', `Checking for WASM files in: ${newTargetPath}`);
+      if (await fs.pathExists(newTargetPath)) {
+        wasmFiles = await fs.readdir(newTargetPath).catch(() => []);
+        targetDir = newTargetPath;
+        log('info', `Using wasm32v1-none target directory, found ${wasmFiles.length} files: ${wasmFiles.join(', ')}`);
+      }
+      
+      // Fall back to older wasm32-unknown-unknown target if no files found
+      if (wasmFiles.length === 0) {
+        const oldTargetPath = path.join(buildDir, 'target', 'wasm32-unknown-unknown', 'release');
+        if (await fs.pathExists(oldTargetPath)) {
+          wasmFiles = await fs.readdir(oldTargetPath).catch(() => []);
+          targetDir = oldTargetPath;
+          log('info', 'Using wasm32-unknown-unknown target directory');
+        }
+      }
+      
+      const wasmFile = wasmFiles.find(f => f.endsWith('.wasm') && !f.includes('deps'));
       
       if (wasmFile) {
-        const wasmPath = path.join(projectDir, 'target', 'wasm32-unknown-unknown', 'release', wasmFile);
+        const wasmPath = path.join(targetDir, wasmFile);
         const wasmContent = await fs.readFile(wasmPath);
         
         log('success', `Real compilation successful! Generated ${wasmFile} (${wasmContent.length} bytes)`);
         
-        return {
+        const result = {
           success: true,
           output: {
             wasm: wasmContent.toString('base64'),
@@ -381,6 +464,9 @@ class CompilationService {
           logs: logs,
           compilationType: 'real'
         };
+        
+        log('info', `Returning success result with ${result.output.wasm.length} chars of base64 WASM data`);
+        return result;
       } else {
         throw new Error('No WASM file generated');
       }
