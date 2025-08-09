@@ -1,579 +1,209 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Code2, Rocket, Bot, TestTube, Package, Shield, Store, Cloud, Play, ArrowRight, Menu, X, FileCode, Zap, Star, Github, Twitter, Linkedin, Mail, Globe, Users, Award, Heart } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import PlaygroundNavbar from '@/components/playground-navbar'
+import PlaygroundFooter from '@/components/playground-footer'
+import PlaygroundSubscription from '@/components/playground-subscription'
+import { Cloud, Bot, Rocket } from 'lucide-react'
 
-export default function WebSorobanLanding() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [typedCode, setTypedCode] = useState('')
-  const [currentLine, setCurrentLine] = useState(0)
-
-  const codeLines = [
-    '#![no_std]',
-    'use soroban_sdk::{contract, contractimpl, Env, Symbol, Address};',
-    '',
-    '#[contract]',
-    'pub struct PaymentContract;',
-    '',
-    '#[contractimpl]',
-    'impl PaymentContract {',
-    '    pub fn init(env: Env) {',
-    '        let admin = env.current_contract_address();',
-    '        env.storage().instance().set(&symbol("admin"), &admin);',
-    '    }',
-    '',
-    '    pub fn transfer(env: Env, from: Address, to: Address, amount: i128) {',
-    '        from.require_auth();',
-    '        let balance_key = symbol("balance");',
-    '        let from_balance = env.storage().instance().get(&balance_key).unwrap_or(0);',
-    '        require!(from_balance >= amount, Error::InsufficientBalance);',
-    '        env.storage().instance().set(&balance_key, &(from_balance - amount));',
-    '        let to_balance = env.storage().instance().get(&balance_key).unwrap_or(0);',
-    '        env.storage().instance().set(&balance_key, &(to_balance + amount));',
-    '    }',
-    '}'
-  ]
+export default function HomePage() {
+  const heroRef = useRef<HTMLDivElement>(null)
+  const featuresRef = useRef<HTMLDivElement>(null)
+  const stepsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (currentLine < codeLines.length) {
-        const line = codeLines[currentLine]
-        if (typedCode.length < line.length) {
-          setTypedCode(prev => prev + line[typedCode.length])
-        } else {
-          setTypedCode(prev => prev + '\n')
-          setCurrentLine(prev => prev + 1)
-        }
-      } else {
-        // Reset animation
-        setTimeout(() => {
-          setTypedCode('')
-          setCurrentLine(0)
-        }, 2000)
-      }
-    }, 50)
-
-    return () => clearInterval(interval)
-  }, [typedCode, currentLine])
-
-  const features = [
-    {
-      icon: Bot,
-      title: "AI Copilot for Contract Generation",
-      description: "Intelligent code completion and contract generation powered by advanced AI models trained on Soroban patterns."
-    },
-    {
-      icon: Rocket,
-      title: "One-click Deployment to Stellar Testnet",
-      description: "Deploy your contracts instantly to Stellar testnet with automated configuration and network management."
-    },
-    {
-      icon: Cloud,
-      title: "WASM Compilation in the Cloud",
-      description: "Compile your Rust contracts to WASM in our optimized cloud infrastructure without local setup."
-    },
-    {
-      icon: TestTube,
-      title: "Run Inline Unit & Integration Tests",
-      description: "Execute comprehensive test suites directly in the browser with real-time feedback and debugging."
-    },
-    {
-      icon: Package,
-      title: "Auto-generate Client SDKs",
-      description: "Automatically generate TypeScript, JavaScript, and Go SDKs for seamless frontend integration."
-    },
-    {
-      icon: Shield,
-      title: "AI-Powered Security Audits",
-      description: "Advanced static analysis and vulnerability detection using machine learning security models."
-    },
-    {
-      icon: Store,
-      title: "Curated Marketplace of Pre-Audited Templates",
-      description: "Access professionally audited contract templates for DeFi, NFTs, governance, and more."
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px',
     }
-  ]
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-in')
+        }
+      })
+    }, observerOptions)
+
+    // Observe all animated elements
+    const animatedElements = document.querySelectorAll('.animate-on-scroll')
+    animatedElements.forEach((el) => observer.observe(el))
+
+    return () => observer.disconnect()
+  }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-100">
-      {/* Navigation */}
-      <nav className="border-b border-slate-200/60 bg-white/90 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              {/* <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-slate-800 rounded-xl flex items-center justify-center shadow-lg">
-                <Code2 className="w-6 h-6 text-white" />
-              </div> */}
-              <span className="text-2xl font-display bg-gradient-to-r from-blue-600 to-slate-800 bg-clip-text text-transparent">
-                Web Soroban
+    <main className="min-h-screen bg-black text-white overflow-x-hidden">
+      <div className="animate-fade-in">
+        <PlaygroundNavbar />
+      </div>
+
+      {/* Hero Section */}
+      <section className="relative px-4 py-16 md:py-24 overflow-hidden">
+        <div className="container mx-auto max-w-6xl relative z-10" ref={heroRef}>
+          <div className="flex flex-col items-center text-center space-y-8">
+            <h1 className="text-4xl md:text-6xl lg:text-8xl font-bold animate-on-scroll opacity-0 translate-y-8 transition-all duration-1000 delay-200">
+              <span className="text-[#F9F871] inline-block animate-bounce-subtle">Shipping Soroban</span>{' '}
+              <span className="text-[#F9F871] inline-block animate-bounce-subtle animation-delay-200">Straight</span>{' '}
+              <span className="text-[#FF4CF0] inline-block animate-bounce-subtle animation-delay-400">
+                to your browser
               </span>
-            </div>
+            </h1>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
-                Features
-              </a>
-              <a href="#pricing" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
-                Pricing
-              </a>
-              {/* <a href="/docs" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
-                Docs
-              </a> */}
-              <Button variant="ghost" className="text-slate-600 hover:text-slate-900">
-                Login
-              </Button>
-              <Button 
-                className="bg-gradient-to-r from-blue-600 to-slate-700 hover:from-blue-700 hover:to-slate-800 text-white rounded-lg px-6"
-                onClick={() => window.location.href = '/ide'}
+            <div className="relative animate-on-scroll opacity-0 translate-y-8 transition-all duration-1000 delay-500">
+              <a
+                href="/contract"
+                className="relative mx-auto bg-gradient-to-r from-[#A3FF12] to-[#8FE600] hover:from-[#8FE600] hover:to-[#7BD300] rounded-xl w-64 h-20 shadow-[8px_0_16px_rgba(160,32,240,0.8)] z-10 transform translate-y-6 hover:scale-105 hover:shadow-[12px_0_24px_rgba(160,32,240,1)] transition-all duration-300 animate-pulse-glow group active:scale-95 flex items-center justify-center"
               >
-                Launch IDE
-              </Button>
+                <span className="text-black font-bold text-xl tracking-wide group-hover:scale-110 transition-transform duration-200">
+                  Code Now
+                </span>
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </a>
+              <img
+                src="/placeholder.svg?height=400&width=400"
+                alt="Ellipse"
+                className="absolute -mt-24 items-start -left-24 -top-72 -z-10 animate-float opacity-30"
+              />
             </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
           </div>
-
-          {/* Mobile Navigation */}
-          {isMenuOpen && (
-            <div className="md:hidden border-t border-slate-200 py-4">
-              <div className="flex flex-col space-y-4">
-                <a href="#features" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
-                  Features
-                </a>
-                <a href="#pricing" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
-                  Pricing
-                </a>
-                <a href="/docs" className="text-slate-600 hover:text-slate-900 transition-colors font-medium">
-                  Docs
-                </a>
-                <Button variant="ghost" className="justify-start text-slate-600 hover:text-slate-900">
-                  Login
-                </Button>
-                <Button 
-                  className="bg-gradient-to-r from-blue-600 to-slate-700 text-white rounded-lg"
-                  onClick={() => window.location.href = '/ide'}
-                >
-                  Launch IDE
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
-      </nav>
 
-      {/* Hero Section with Editor Mockup */}
-      <section className="container mx-auto px-4 py-12 lg:py-20">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8">
-            <div className="space-y-6">
-              <h1 className="text-5xl lg:text-7xl font-display leading-tight">
-                <span className="bg-gradient-to-r from-blue-600 to-slate-800 bg-clip-text text-transparent">
-                  Web Soroban
+        {/* Floating background elements */}
+        <div className="absolute top-20 left-10 w-4 h-4 bg-[#A3FF12] rounded-full animate-float animation-delay-1000 opacity-60"></div>
+        <div className="absolute top-40 right-20 w-6 h-6 bg-[#FF4CF0] rounded-full animate-float animation-delay-1500 opacity-40"></div>
+        <div className="absolute bottom-20 left-1/4 w-3 h-3 bg-[#F9F871] rounded-full animate-float animation-delay-2000 opacity-50"></div>
+      </section>
+
+      <div className="border border-white rounded-3xl mx-auto max-w-5xl mt-4 mb-10 animate-on-scroll opacity-0 translate-y-8 transition-all duration-1000 delay-300 hover:border-purple-500/50 hover:shadow-[0_0_30px_rgba(160,32,240,0.3)]">
+        {/* Playground Section */}
+        <section className="relative">
+          <img src="/ellipse2.png" alt="Ellipse 2" className="absolute top-0 -left-96 px-96 z-10" />
+          <img src="/dot.png" alt="dot" className="absolute -top-4 -left-96 px-96 z-0" />
+          <div className="relative mx-32 rounded-xl w-[729px] h-[470px] shadow-[8px_0_16px_rgba(160,32,240,0.8)] z-10 transform translate-y-16 hover:shadow-[12px_0_24px_rgba(160,32,240,1)] transition-all duration-500 hover:scale-[1.02] group">
+            <img 
+              src="/playground.png" 
+              alt="Playground" 
+              className="absolute -top-2 z-20 rounded-xl group-hover:brightness-110 transition-all duration-300" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl"></div>
+              </div>
+        </section>
+
+        {/* Why WebSoroban Section */}
+        <section className="py-32 bg-black">
+          <div className="container mx-auto flex">
+            <div>
+              <img src="/semi.png" alt="Semi Circle" className="top-0 left-28 w-full h-full z-0" />
+            </div>
+            <div className="animate-on-scroll opacity-0 translate-x-8 transition-all duration-1000">
+              <h2 className="text-6xl font-bold mb-2 mt-12 px-24 text-white">
+                Why{' '}
+                <span className="bg-gradient-to-r from-[#A3FF12] via-[#FF4CF0] to-[#F9F871] bg-clip-text text-transparent animate-gradient-x">
+                  WebSoroban
                 </span>
-                <br />
-                <span className="text-slate-900">
-                  The Smartest Way to Build on Stellar
-                </span>
-              </h1>
-              
-              <p className="text-xl font-body text-slate-600 leading-relaxed max-w-lg">
-                Compile, Deploy, and Audit Soroban Smart Contracts — with AI
+                ?
+              </h2>
+              <p className="text-gray-400 mb-12 max-w-2xl px-24 animate-on-scroll opacity-0 translate-y-4 transition-all duration-1000 delay-200">
+                WebSoroban simplifies Soroban smart contract development, making it accessible for both beginners and
+                experts.
               </p>
             </div>
-
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                size="lg" 
-                className="bg-gradient-to-r from-blue-600 to-slate-700 hover:from-blue-700 hover:to-slate-800 text-white rounded-xl px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
-                onClick={() => window.location.href = '/ide'}
-              >
-                <Play className="w-5 h-5 mr-2" />
-                Launch IDE
-              </Button>
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="rounded-xl px-8 py-6 text-lg font-semibold border-2 hover:bg-slate-50"
-              >
-                View Features
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </div>
-
-            <div className="flex items-center space-x-6 text-sm text-slate-500">
-              <div className="flex items-center">
-                <Zap className="w-4 h-4 mr-2 text-blue-500" />
-                No Setup Required
-              </div>
-              <div className="flex items-center">
-                <Shield className="w-4 h-4 mr-2 text-blue-500" />
-                Enterprise Security
-              </div>
-            </div>
           </div>
 
-          {/* Editor Mockup */}
-          <div className="relative">
-            <Card className="border-0 shadow-2xl rounded-2xl overflow-hidden bg-slate-900">
-              {/* Editor Header */}
-              <div className="bg-slate-800 px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                </div>
-                <div className="flex items-center space-x-4 text-slate-400 text-sm">
-                  <div className="flex items-center">
-                    <FileCode className="w-4 h-4 mr-2" />
-                    contract.rs
-                  </div>
-                </div>
+          <div className="container mx-auto max-w-6xl text-center" ref={featuresRef}>
+            <div className="flex flex-wrap justify-center gap-8">
+              <div className="feature-card animate-on-scroll opacity-0 translate-y-8 transition-all duration-1000 delay-100 flex flex-col items-center justify-center bg-[#1C2126] rounded-xl w-64 h-72 shadow-[8px_0_16px_rgba(160,32,240,0.8)] z-10 transform translate-y-16 p-6 hover:scale-105 hover:shadow-[12px_0_24px_rgba(160,32,240,1)] hover:bg-[#252A30] group cursor-pointer">
+                <Cloud className="w-12 h-12 text-[#A3FF12] mb-4 group-hover:scale-110 group-hover:animate-bounce transition-all duration-300" />
+                <h3 className="text-xl font-bold mb-3 text-white group-hover:text-[#A3FF12] transition-colors duration-300">
+                  Zero-setup IDE
+                </h3>
+                <p className="text-gray-400 text-sm text-center group-hover:text-gray-300 transition-colors duration-300">
+                  Code, test, and deploy Soroban contracts instantly with our cloud-based IDE.
+                </p>
               </div>
 
-              {/* Editor Content */}
-              <div className="p-6 h-80 overflow-hidden">
-                                  <div className="flex">
-                    {/* Line Numbers */}
-                    <div className="text-slate-500 text-sm font-mono-code mr-4 select-none">
-                      {Array.from({ length: 15 }, (_, i) => (
-                        <div key={i} className="leading-6">
-                          {i + 1}
-                        </div>
-                      ))}
-                    </div>
-
-                                      {/* Code Content */}
-                  <div className="flex-1">
-                    <pre className="text-sm font-mono-code leading-6 text-slate-300">
-                      <code>
-                        <span className="text-purple-400">#![no_std]</span>
-                        {'\n'}
-                        <span className="text-blue-400">use</span> <span className="text-green-400">soroban_sdk</span>::{'{'}contract, contractimpl, Env, Symbol, Address, Map, Vec{'}'};
-                        {'\n'}
-                        <span className="text-blue-400">use</span> <span className="text-green-400">soroban_sdk</span>::<span className="text-green-300">symbol</span>;
-                        {'\n\n'}
-                        <span className="text-yellow-400">#[contract]</span>
-                        {'\n'}
-                        <span className="text-blue-400">pub struct</span> <span className="text-green-300">PaymentContract</span>;
-                        {'\n\n'}
-                        <span className="text-yellow-400">#[contractimpl]</span>
-                        {'\n'}
-                        <span className="text-blue-400">impl</span> <span className="text-green-300">PaymentContract</span> {'{'}
-                        {'\n'}
-                        {'    '}<span className="text-blue-400">pub fn</span> <span className="text-yellow-300">init</span>(env: <span className="text-green-300">Env</span>) {'{'}
-                        {'\n'}
-                        {'        '}<span className="text-blue-400">let</span> <span className="text-blue-300">admin</span> = env.current_contract_address();
-                        {'\n'}
-                        {'        '}env.storage().instance().set(&<span className="text-green-300">symbol</span>(<span className="text-orange-300">"admin"</span>), &admin);
-                        {'\n'}
-                        {'    '}{'}'}
-                        {'\n\n'}
-                        {'    '}<span className="text-blue-400">pub fn</span> <span className="text-yellow-300">transfer</span>(env: <span className="text-green-300">Env</span>, from: <span className="text-green-300">Address</span>, to: <span className="text-green-300">Address</span>, amount: <span className="text-blue-300">i128</span>) {'{'}
-                        {'\n'}
-                        {'        '}from.<span className="text-yellow-300">require_auth</span>();
-                        {'\n'}
-                        {'        '}<span className="text-blue-400">let</span> <span className="text-blue-300">balance_key</span> = <span className="text-green-300">symbol</span>(<span className="text-orange-300">"balance"</span>);
-                        {'\n'}
-                        {'        '}<span className="text-blue-400">let</span> <span className="text-blue-300">from_balance</span> = env.storage().instance().get(&balance_key).unwrap_or(0);
-                        {'\n'}
-                        {'        '}<span className="text-blue-400">require</span>!(from_balance {'>='} amount, <span className="text-green-300">Error</span>::<span className="text-yellow-300">InsufficientBalance</span>);
-                        {'\n\n'}
-                        {'        '}<span className="text-gray-500">// Update balances</span>
-                        {'\n'}
-                        {'        '}env.storage().instance().set(&balance_key, &(from_balance {'-'} amount));
-                        {'\n'}
-                        {'        '}<span className="text-blue-400">let</span> <span className="text-blue-300">to_balance</span> = env.storage().instance().get(&balance_key).unwrap_or(0);
-                        {'\n'}
-                        {'        '}env.storage().instance().set(&balance_key, &(to_balance {'+'} amount));
-                        {'\n'}
-                        {'    '}{'}'}
-                        {'\n\n'}
-                        {'    '}<span className="text-blue-400">pub fn</span> <span className="text-yellow-300">get_balance</span>(env: <span className="text-green-300">Env</span>, address: <span className="text-green-300">Address</span>) -> <span className="text-blue-300">i128</span> {'{'}
-                        {'\n'}
-                        {'        '}env.storage().instance().get(&<span className="text-green-300">symbol</span>(<span className="text-orange-300">"balance"</span>)).unwrap_or(0)
-                        {'\n'}
-                        {'    '}{'}'}
-                        {'\n'}
-                        {'}'}
-                        {'\n\n'}
-                        <span className="text-yellow-400">#[derive(Clone, Debug, Eq, PartialEq)]</span>
-                        {'\n'}
-                        <span className="text-blue-400">pub enum</span> <span className="text-green-300">Error</span> {'{'}
-                        {'\n'}
-                        {'    '}<span className="text-yellow-300">InsufficientBalance</span>,
-                        {'\n'}
-                        {'    '}<span className="text-yellow-300">Unauthorized</span>,
-                        {'\n'}
-                        {'}'}
-                        <span className="animate-pulse bg-blue-500 w-2 h-5 inline-block ml-1"></span>
-                      </code>
-                    </pre>
-                  </div>
-                </div>
+              <div className="feature-card animate-on-scroll opacity-0 translate-y-8 transition-all duration-1000 delay-300 flex flex-col items-center justify-center mt-20 bg-[#1C2126] rounded-xl w-64 h-72 shadow-[8px_0_16px_rgba(160,32,240,0.8)] z-10 transform translate-y-16 p-6 hover:scale-105 hover:shadow-[12px_0_24px_rgba(160,32,240,1)] hover:bg-[#252A30] group cursor-pointer">
+                <Bot className="w-12 h-12 text-[#FF4CF0] mb-4 group-hover:scale-110 group-hover:animate-pulse transition-all duration-300" />
+                <h3 className="text-xl font-bold mb-3 text-white group-hover:text-[#FF4CF0] transition-colors duration-300">
+                  AI Copilot
+                </h3>
+                <p className="text-gray-400 text-sm text-center group-hover:text-gray-300 transition-colors duration-300">
+                  Generate, debug, and optimize contracts with natural language prompts.
+                </p>
               </div>
 
-              {/* AI Copilot Suggestion */}
-              <div className="bg-blue-900/30 border-t border-blue-800/50 px-6 py-3">
-                <div className="flex items-center text-blue-300 text-sm">
-                  <Bot className="w-4 h-4 mr-2" />
-                  AI Copilot: Press Tab to accept suggestion
-                </div>
-              </div>
-            </Card>
-
-            {/* Floating Elements */}
-            <div className="absolute -top-4 -right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
-              ✓ Compiled
-            </div>
-            <div className="absolute -bottom-4 -left-4 bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
-              🤖 AI Active
+              <div className="feature-card animate-on-scroll opacity-0 translate-y-8 transition-all duration-1000 delay-500 flex flex-col items-center justify-center mt-56 bg-[#1C2126] rounded-xl w-64 h-72 shadow-[8px_0_16px_rgba(160,32,240,0.8)] z-10 transform translate-y-16 p-6 hover:scale-105 hover:shadow-[12px_0_24px_rgba(160,32,240,1)] hover:bg-[#252A30] group cursor-pointer">
+                <Rocket className="w-12 h-12 text-[#F9F871] mb-4 group-hover:scale-110 group-hover:animate-bounce transition-all duration-300" />
+                <h3 className="text-xl font-bold mb-3 text-white group-hover:text-[#F9F871] transition-colors duration-300">
+                  One-click Deploy
+                </h3>
+                <p className="text-gray-400 text-sm text-center group-hover:text-gray-300 transition-colors duration-300">
+                  Directly push to Stellar testnet/mainnet with a single click.
+                </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="container mx-auto px-4 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-5xl font-heading mb-6 text-slate-900">
-            Everything you need for Soroban development
+        {/* Steps Section */}
+        <section className="py-20" ref={stepsRef}>
+          <div className="container mx-auto text-center">
+            <h2 className="text-4xl font-bold text-white mb-12 animate-on-scroll opacity-0 translate-y-4 transition-all duration-1000">
+              Get Started in{' '}
+              <span className="bg-gradient-to-r from-[#A3FF12] to-[#FF4CF0] bg-clip-text text-transparent">
+                Three Easy Steps
+              </span>
           </h2>
-          <p className="text-xl font-body text-slate-600 max-w-3xl mx-auto">
-            From AI-powered code generation to one-click deployment, Web Soroban provides a complete toolkit for professional smart contract development.
-          </p>
-        </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <Card key={index} className="border-0 shadow-xl hover:shadow-2xl transition-all duration-500 bg-white/90 backdrop-blur-sm rounded-3xl group hover:-translate-y-2 border border-slate-100/50">
-              <CardContent className="p-8">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-slate-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                  <feature.icon className="w-8 h-8 text-white" />
+            <div className="flex gap-10 px-24 animate-on-scroll opacity-0 translate-x-8 transition-all duration-1000 delay-200">
+              <div className="step-card flex flex-col items-start justify-start bg-[#1C2126] rounded-xl w-96 h-64 shadow-[8px_0_16px_rgba(160,32,240,0.8)] border border-purple-500/20 z-10 p-8 hover:scale-105 hover:shadow-[12px_0_24px_rgba(160,32,240,1)] hover:border-[#A3FF12]/50 transition-all duration-500 group cursor-pointer">
+                <div className="bg-[#A3FF12] rounded-full w-12 h-12 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:animate-pulse transition-all duration-300">
+                  <span className="text-black font-bold text-xl">1</span>
                 </div>
-                <h3 className="text-xl font-heading mb-4 text-slate-900 group-hover:text-blue-600 transition-colors">{feature.title}</h3>
-                <p className="text-slate-600 leading-relaxed font-body">{feature.description}</p>
-                <div className="mt-6 pt-4 border-t border-slate-100">
-                  <Badge className="bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200">
-                    <Star className="w-3 h-3 mr-1" />
-                    AI Powered
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      {/* Demo Section */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-5xl font-heading mb-6 text-slate-900">
-            See Web Soroban in Action
-          </h2>
-          <p className="text-xl font-body text-slate-600 mb-12">
-            Watch how our AI copilot helps you write secure, efficient Soroban smart contracts
-          </p>
-
-          <Card className="border-0 shadow-2xl rounded-3xl overflow-hidden bg-slate-900">
-            <div className="bg-slate-800 px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-[#A3FF12] transition-colors duration-300">
+                  Test
+                </h3>
+                <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors duration-300">
+                  Run contracts in-browser via WASM sandbox
+                </p>
               </div>
-              <div className="text-slate-400 text-sm font-mono">
-                payment_contract.rs
-              </div>
+              <img src="/Vector.png" alt="Vector" className="mt-28 z-10 animate-pulse-slow opacity-60" />
             </div>
             
-            <div className="p-8 h-64 overflow-hidden">
-              <pre className="text-green-400 font-mono-code text-sm leading-relaxed">
-                <code>{typedCode}</code>
-                <span className="animate-pulse bg-green-400 w-2 h-5 inline-block"></span>
-              </pre>
-            </div>
-
-            <div className="bg-slate-800 px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center text-slate-400 text-sm">
-                <Bot className="w-4 h-4 mr-2" />
-                AI Copilot Active
-              </div>
-              <div className="flex items-center space-x-4 text-slate-400 text-sm">
-                <span>✓ Syntax Valid</span>
-                <span>✓ Security Checked</span>
-                <span>✓ Ready to Deploy</span>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-5xl font-heading mb-6 text-slate-900">
-            Ready to build the future of finance?
-          </h2>
-          <p className="text-xl font-body text-slate-600 mb-10">
-            Join thousands of developers building on Stellar with Web Soroban
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              className="bg-gradient-to-r from-blue-600 to-slate-700 hover:from-blue-700 hover:to-slate-800 text-white rounded-xl px-10 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
-              onClick={() => window.location.href = '/ide'}
-            >
-              <Play className="w-5 h-5 mr-2" />
-              Launch IDE Now
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="rounded-xl px-10 py-6 text-lg font-semibold border-2"
-            >
-              View Documentation
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-gradient-to-br from-slate-50 to-blue-50/30 backdrop-blur-sm rounded-2xl ">
-        <div className="container mx-auto px-4 py-16">
-          <div className="grid md:grid-cols-4 gap-12">
-            {/* Brand Section */}
-            <div className="space-y-6">
-              <div className="flex items-center space-x-3">
-                {/* <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-slate-800 rounded-xl flex items-center justify-center shadow-lg">
-                  <Code2 className="w-7 h-7 text-white" />
-                </div> */}
-                <div>
-                  <span className="text-2xl font-display bg-gradient-to-r from-blue-600 to-slate-800 bg-clip-text text-transparent">
-                    Web Soroban
-                  </span>
-                  <div className="flex items-center space-x-1 mt-1">
-                    <Star className="w-3 h-3 text-yellow-400" />
-                    <span className="text-xs text-slate-500 font-medium">Stellar IDE</span>
-                  </div>
+            <div className="flex gap-10 mt-10 px-32 animate-on-scroll opacity-0 translate-x-8 transition-all duration-1000 delay-400">
+              <img src="/turn.png" alt="Vector" className="mt-36 z-10 animate-pulse-slow opacity-60" />
+              <div className="step-card flex flex-col items-start justify-start bg-[#1C2126] rounded-xl w-96 h-64 shadow-[8px_0_16px_rgba(160,32,240,0.8)] border border-purple-500/20 z-10 p-8 hover:scale-105 hover:shadow-[12px_0_24px_rgba(160,32,240,1)] hover:border-[#FF4CF0]/50 transition-all duration-500 group cursor-pointer">
+                <div className="bg-[#FF4CF0] rounded-full w-12 h-12 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:animate-pulse transition-all duration-300">
+                  <span className="text-white font-bold text-xl">2</span>
                 </div>
-              </div>
-              <p className="text-slate-600 font-body leading-relaxed">
-                The professional IDE for Stellar Soroban smart contract development with AI-powered assistance.
-              </p>
-              <div className="flex space-x-3">
-                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200">
-                  <Award className="w-3 h-3 mr-1" />
-                  AI Powered
-                </Badge>
-                <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border border-green-200">
-                  <Shield className="w-3 h-3 mr-1" />
-                  Secure
-                </Badge>
+                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-[#FF4CF0] transition-colors duration-300">
+                  Simulate
+                </h3>
+                <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors duration-300">
+                  Mock transactions with real gas fee estimates
+                </p>
               </div>
             </div>
 
-            {/* Product Links */}
-            <div>
-              <h3 className="font-heading text-slate-900 mb-6 text-lg">Product</h3>
-              <div className="space-y-3">
-                <a href="#" className="block text-slate-600 hover:text-blue-600 transition-colors font-body group">
-                  <span className="group-hover:translate-x-1 transition-transform inline-block">Features</span>
-                </a>
-                <a href="#" className="block text-slate-600 hover:text-blue-600 transition-colors font-body group">
-                  <span className="group-hover:translate-x-1 transition-transform inline-block">Pricing</span>
-                </a>
-                <a href="#" className="block text-slate-600 hover:text-blue-600 transition-colors font-body group">
-                  <span className="group-hover:translate-x-1 transition-transform inline-block">Changelog</span>
-                </a>
-                <a href="#" className="block text-slate-600 hover:text-blue-600 transition-colors font-body group">
-                  <span className="group-hover:translate-x-1 transition-transform inline-block">Roadmap</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Resources Links */}
-            <div>
-              <h3 className="font-heading text-slate-900 mb-6 text-lg">Resources</h3>
-              <div className="space-y-3">
-                <a href="#" className="block text-slate-600 hover:text-blue-600 transition-colors font-body group">
-                  <span className="group-hover:translate-x-1 transition-transform inline-block">Documentation</span>
-                </a>
-                <a href="#" className="block text-slate-600 hover:text-blue-600 transition-colors font-body group">
-                  <span className="group-hover:translate-x-1 transition-transform inline-block">API Reference</span>
-                </a>
-                <a href="#" className="block text-slate-600 hover:text-blue-600 transition-colors font-body group">
-                  <span className="group-hover:translate-x-1 transition-transform inline-block">Community</span>
-                </a>
-                <a href="#" className="block text-slate-600 hover:text-blue-600 transition-colors font-body group">
-                  <span className="group-hover:translate-x-1 transition-transform inline-block">Support</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Company Links */}
-            <div>
-              <h3 className="font-heading text-slate-900 mb-6 text-lg">Company</h3>
-              <div className="space-y-3">
-                <a href="#" className="block text-slate-600 hover:text-blue-600 transition-colors font-body group">
-                  <span className="group-hover:translate-x-1 transition-transform inline-block">About</span>
-                </a>
-                <a href="#" className="block text-slate-600 hover:text-blue-600 transition-colors font-body group">
-                  <span className="group-hover:translate-x-1 transition-transform inline-block">Blog</span>
-                </a>
-                <a href="#" className="block text-slate-600 hover:text-blue-600 transition-colors font-body group">
-                  <span className="group-hover:translate-x-1 transition-transform inline-block">Careers</span>
-                </a>
-                <a href="#" className="block text-slate-600 hover:text-blue-600 transition-colors font-body group">
-                  <span className="group-hover:translate-x-1 transition-transform inline-block">Contact</span>
-                </a>
+            <div className="flex gap-10 mt-10 px-10 animate-on-scroll opacity-0 translate-x-8 transition-all duration-1000 delay-600">
+              <div className="step-card flex flex-col items-start justify-start bg-[#1C2126] rounded-xl w-96 h-64 shadow-[8px_0_16px_rgba(160,32,240,0.8)] border border-purple-500/20 z-10 p-8 hover:scale-105 hover:shadow-[12px_0_24px_rgba(160,32,240,1)] hover:border-[#F9F871]/50 transition-all duration-500 group cursor-pointer">
+                <div className="bg-[#F9F871] rounded-full w-12 h-12 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:animate-pulse transition-all duration-300">
+                  <span className="text-black font-bold text-xl">3</span>
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-[#F9F871] transition-colors duration-300">
+                  Deploy
+                </h3>
+                <p className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors duration-300">
+                  Push to Stellar Testnet/mainnet with one click
+                </p>
               </div>
             </div>
           </div>
-
-          {/* Bottom Section */}
-          <div className="border-t border-slate-200 mt-12 pt-8">
-            <div className="flex flex-col lg:flex-row items-center justify-between space-y-4 lg:space-y-0">
-              {/* Copyright */}
-              <div className="flex items-center space-x-4">
-                <div className="text-slate-600 font-body">
-                  © 2025 Web Soroban. All rights reserved.
-                </div>
-                <div className="flex items-center space-x-1 text-slate-500">
-                  <Heart className="w-4 h-4" />
-                  <span className="text-sm font-body">Built for Stellar Community</span>
-                </div>
-              </div>
-
-              {/* Social Links */}
-              <div className="flex items-center space-x-4">
-                <a href="#" className="w-10 h-10 bg-slate-100 hover:bg-blue-100 rounded-lg flex items-center justify-center transition-colors group">
-                  <Github className="w-5 h-5 text-slate-600 group-hover:text-blue-600" />
-                </a>
-                <a href="#" className="w-10 h-10 bg-slate-100 hover:bg-blue-100 rounded-lg flex items-center justify-center transition-colors group">
-                  <Twitter className="w-5 h-5 text-slate-600 group-hover:text-blue-600" />
-                </a>
-                <a href="#" className="w-10 h-10 bg-slate-100 hover:bg-blue-100 rounded-lg flex items-center justify-center transition-colors group">
-                  <Linkedin className="w-5 h-5 text-slate-600 group-hover:text-blue-600" />
-                </a>
-                <a href="#" className="w-10 h-10 bg-slate-100 hover:bg-blue-100 rounded-lg flex items-center justify-center transition-colors group">
-                  <Mail className="w-5 h-5 text-slate-600 group-hover:text-blue-600" />
-                </a>
-              </div>
-            </div>
-          </div>
+        </section>
         </div>
-      </footer>
-    </div>
+      <PlaygroundSubscription />
+      <PlaygroundFooter />
+    </main>
   )
 }
