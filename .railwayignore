@@ -1,5 +1,3 @@
 frontend/
 README.md
 .git/
-package.json
-package-lock.json

@@ -23,16 +23,16 @@ ENV PATH="/root/.local/bin:$PATH"
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY backend/package*.json ./
 
 # Install Node.js dependencies
 RUN npm ci --only=production
 
 # Copy application files
-COPY . .
+COPY backend/ .
 
 # Copy compilation script
-COPY scripts/compile.sh /usr/local/bin/compile.sh
+COPY backend/scripts/compile.sh /usr/local/bin/compile.sh
 RUN chmod +x /usr/local/bin/compile.sh
 
 # Create necessary directories
